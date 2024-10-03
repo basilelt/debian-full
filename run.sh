@@ -1,1 +1,0 @@
-docker run -d -p 2222:22 --name debian-full -v ~/Documents/:/home/toto/data basilelt/debian-full:latest

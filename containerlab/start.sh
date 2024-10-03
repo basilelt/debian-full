@@ -1,12 +1,11 @@
 #!/bin/bash
 
 # Start SSH service
-/usr/sbin/sshd
+service ssh start
+service docker start
 
 # Start your other services here
 # For example:
 # service postgresql start
 
-# Switch to the toto user and start a shell
-su - toto
-source /home/toto/.venv/bin/activate
+exec tail -f /dev/null
