@@ -9,3 +9,4 @@
 
 # Switch to the toto user and start a shell
 su - toto
+source /home/toto/.venv/bin/activate
