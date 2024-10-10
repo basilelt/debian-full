@@ -1,38 +1,55 @@
-# Use Debian Bullseye as the base image
-FROM debian:latest
+# Use the official Docker-in-Docker image
+FROM docker:dind
 
 # Set the containerlab version
 ARG CLAB_VERSION=0.57.5
 
+# Copy start.sh
+COPY start.sh /start.sh
+
 # Install basic tools and dependencies
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y sshpass openssh-server curl iputils-ping \
-    coreutils htop yamllint docker.io ca-certificates sudo && \
-    apt-get clean && \
-    useradd -m -s /bin/bash clab-user && \
-    usermod -aG sudo clab-user && \
-    usermod -aG docker clab-user && \
+RUN apk update && \
+    apk add --no-cache \
+    openssh-server \
+    sshpass \
+    curl \
+    iputils \
+    coreutils \
+    htop \
+    yamllint \
+    sudo \
+    bash && \
+    # Create a user and set password
+    adduser -D -h /home/clab-user -s /bin/sh clab-user && \
     echo 'clab-user:toto' | chpasswd && \
-    mkdir -p /home/clab-user/data && \
-    mkdir /var/run/sshd && \
-    sed -i 's/^#*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
-    sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd && \
-    echo "X11Forwarding yes" >> /etc/ssh/sshd_config && \
+    # Add user to sudoers
+    echo "clab-user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    # Add user to docker group
+    addgroup clab-user docker && \
+    # Setup SSH
+    mkdir -p /var/run/sshd && \
     mkdir -p /home/clab-user/.ssh && \
+    chown clab-user:clab-user /home/clab-user/.ssh && \
     chmod 700 /home/clab-user/.ssh && \
     touch /home/clab-user/.ssh/authorized_keys && \
+    chown clab-user:clab-user /home/clab-user/.ssh/authorized_keys && \
     chmod 600 /home/clab-user/.ssh/authorized_keys && \
-    chown -R clab-user:clab-user /home/clab-user/.ssh
+    # Configure SSH
+    sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "X11Forwarding yes" >> /etc/ssh/sshd_config && \
+    ssh-keygen -A && \
+    # Install containerlab
+    bash -c "$(curl -sL https://get.containerlab.dev)" -- -v ${CLAB_VERSION} && \
+    # Set permissions
+    chmod +x /start.sh && \
+    chown root:root /start.sh && \
+    # cleanup
+    rm -rf /var/cache/apk/*
 
-RUN bash -c "$(curl -sL https://get.containerlab.dev)" -- -v ${CLAB_VERSION}
-
-WORKDIR /home/clab-user
-
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
+# Expose SSH port
 EXPOSE 22
 
-CMD ["/start.sh"]
+# Start the entrypoint script
+ENTRYPOINT ["/start.sh"]

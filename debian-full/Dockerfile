@@ -5,10 +5,10 @@ RUN apt-get update && apt-get install -y locales && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=en_US.UTF-8
 
-ENV PATH="/root/.cargo/bin:${PATH}"
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
+ENV PATH="/root/.cargo/bin:${PATH}" \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
@@ -64,6 +64,7 @@ alias ex="exit"\n\
 alias pbcopy="xclip -selection clipboard"\n\
 alias pbpaste="xclip -selection clipboard -o"' > /home/toto/.zshrc && \
     chown toto:toto /home/toto/.zshrc
+
 WORKDIR /home/toto
 
 COPY start.sh /start.sh

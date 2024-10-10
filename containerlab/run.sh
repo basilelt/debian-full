@@ -23,6 +23,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
                 -p 2323:22 \
                 --name "${CONTAINER_NAME}" \
                 -v ~/Documents/:/home/clab-user/data \
+                --privileged \
                 basilelt/containerlab:latest
         fi
     fi
